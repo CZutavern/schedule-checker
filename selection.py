@@ -65,6 +65,9 @@ def name_matches(name, item):
     name = name.strip()
     if not name:
         return False
+    # "=label" means: exactly this label (what the checklist in settings.txt writes)
+    if name.startswith("="):
+        return compact(name[1:]) == compact(item["label"])
     # a CRN (5 digits) matches the registered section with that CRN
     if re.fullmatch(r"\d{5}", name) and item["id"].endswith("_" + name):
         return True
@@ -142,6 +145,8 @@ def apply_group(page, group, names, log=print):
     if not (wants_all or wants_none):
         for name in names:
             hits = [i for i, item in enumerate(items) if name_matches(name, item)]
+            exact = [i for i in hits if compact(items[i]["label"]) == compact(name)]
+            hits = exact or hits          # "afternoon" means the break called afternoon, not afternoontotal
             if not hits:
                 missing.append(name)
             chosen.update(hits)

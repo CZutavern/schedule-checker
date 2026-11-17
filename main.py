@@ -12,6 +12,7 @@ import time
 
 from playwright.sync_api import sync_playwright
 
+import checklist
 import config
 import selection
 
@@ -22,12 +23,8 @@ import selection
 
 REFRESH_PAGE = config.env_bool("REFRESH_PAGE", True)
 
-# Which boxes to tick (by class name, see settings.txt). "off" = leave the boxes as you set them yourself.
+# Which boxes to tick (see settings.txt). "off" = leave the boxes as you set them yourself.
 _MODES = {"1": "all", "all": "all", "2": "specified", "specified": "specified", "specific": "specified"}
-SELECT_MODE = _MODES.get(os.environ.get("SELECT_MODE", "off").strip().lower(), "off")
-LOOKING_FOR = selection.split_names(os.environ.get("LOOKING_FOR", ""))
-REGISTERED = selection.split_names(os.environ.get("REGISTERED", ""))
-BREAKS = selection.split_names(os.environ.get("BREAKS", "leave")) or ["leave"]
 
 CLICK_OK = config.env_bool("CLICK_OK", True)
 CLICK_GENERATE = config.env_bool("CLICK_GENERATE", True)
@@ -102,12 +99,45 @@ def alert():
 # BUTTON FUNCTIONS
 # ==================================================
 
+def choices():
+    """Read the user's choices fresh from settings.txt: SELECT_MODE, plus the classes marked with an x in the
+    checklist and/or typed on the LOOKING_FOR / REGISTERED / BREAKS lines."""
+    mode = _MODES.get(config.get("SELECT_MODE", "off").strip().lower(), "off")
+    ticked = checklist.chosen(config.SETTINGS_FILE)
+    looking_for = selection.split_names(config.get("LOOKING_FOR")) + ticked["looking for"]
+    registered = selection.split_names(config.get("REGISTERED")) + ticked["registered"]
+    breaks = ticked["breaks"] or selection.split_names(config.get("BREAKS", "leave")) or ["leave"]
+    return mode, looking_for, registered, breaks
+
+
 def apply_choices(page):
-    """Tick / untick the class boxes according to SELECT_MODE, LOOKING_FOR, REGISTERED and BREAKS."""
+    """Tick / untick the class boxes according to SELECT_MODE and your choices."""
     try:
-        selection.apply_selection(page, SELECT_MODE, LOOKING_FOR, REGISTERED, BREAKS)
+        mode, looking_for, registered, breaks = choices()
+        selection.apply_selection(page, mode, looking_for, registered, breaks)
     except Exception as e:
         print("Could not apply your class choices:", e)
+
+
+def prepare_checklist(page):
+    """Copy every class and break on the page into settings.txt, so the user can just mark the ones they want."""
+    found = {group: selection.read_group(page, group) for group in selection.GROUPS}
+    status = checklist.sync(config.SETTINGS_FILE, found)
+
+    if status == "empty":
+        print("\nI could not find any classes on this page (is the schedule builder showing?).")
+        print("Nothing was written to settings.txt.")
+    elif status == "created":
+        print("\n" + "=" * 62)
+        print("I copied every class and break on your page into settings.txt.")
+        print("Open settings.txt and:")
+        print("  1. Put an x in the brackets of the classes you want, e.g.  [x] ECEN 340 - ...")
+        print("  2. Set SELECT_MODE (off / all / specified, explained in the file).")
+        print("  3. Save the file.")
+        print("=" * 62)
+        input("\nPress ENTER here after you have saved settings.txt...")
+    elif status == "updated":
+        print("\nYour class list in settings.txt was refreshed from the page (your x marks were kept).")
 
 
 def click_ok(page):
@@ -191,10 +221,7 @@ def main():
         print("  1. Sign in (type your username and password there).")
         print("  2. Approve the Duo / two-factor prompt.")
         print("  3. Open the schedule builder page (your Courses, Breaks and Current Schedule are listed there).")
-        if SELECT_MODE == "off":
-            print("     SELECT_MODE is off, so tick the boxes you want yourself.")
-        else:
-            print(f"     The program ticks the boxes for you (SELECT_MODE={SELECT_MODE}, see settings.txt).")
+        print("     (The program then lists your classes in settings.txt for you to choose from.)")
         print()
         print("This script never sees or stores your login.")
         print()

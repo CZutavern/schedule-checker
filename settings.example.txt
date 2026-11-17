@@ -10,28 +10,33 @@
 # (Leave it empty and the program asks for it each time it starts.)
 SCHEDULER_URL=
 
-# --- 2. Which classes to tick (so you never have to find buttons on the page) -----------------
-# The page has three lists: "Courses" (classes you are LOOKING FOR), "Current Schedule" (classes you are
-# REGISTERED in) and "Breaks". Write class names the way the page shows them, e.g.  ECEN 340  or  PHYS 221
-# (a 5-digit CRN also works for registered classes). Not sure what to write? Run:  python main.py --list
+# --- 2. Which classes to tick --------------------------------------------------------------
+# You never have to type a class name. The first time you run the program and sign in, it COPIES every class
+# and break from your schedule page into the bottom of this file as a checklist:
 #
-# SELECT_MODE says how the boxes get ticked each time the page is checked:
-#   off        the program ticks nothing: you tick the boxes yourself before pressing ENTER.
-#   all        ticks the LOOKING_FOR classes below and ALL of your registered classes.
-#   specified  ticks the LOOKING_FOR classes below and ONLY the REGISTERED classes listed below.
-#              Use this to swap a class: list the registered classes you KEEP, and leave out the one you
-#              are replacing (it is unticked, and the looking-for class you named is ticked instead).
+#     [looking for]
+#     [ ] ECEN 325 - Electronics
+#     [x] ECEN 340 - Electric Energy Conversion      <- put an x in the brackets to choose it
+#
+# It pauses so you can mark the ones you want, set SELECT_MODE below, and save this file. Every later run
+# refreshes the list from the page and keeps your x marks. The lists:
+#   [looking for]  the "Courses" list: classes you want to get into
+#   [registered]   the "Current Schedule" list: classes you are already enrolled in
+#   [breaks]       your breaks
+#
+# SELECT_MODE says what the program does with your marks every time it checks the page:
+#   off        ticks nothing: you tick the boxes yourself before pressing ENTER (default).
+#   all        ticks the classes you marked under [looking for] AND all of your registered classes.
+#   specified  ticks the classes you marked under [looking for] AND ONLY the ones you marked under [registered].
+#              Use this to SWAP a class: mark the registered classes you KEEP, leave the one you are replacing unmarked.
 # (You can also write 1 for "all" and 2 for "specified".)
 SELECT_MODE=off
 
-# Classes you are looking for, separated by commas. Only these boxes stay ticked in the Courses list.
-# Example:  LOOKING_FOR=ECEN 340, PHYS 221
+# Optional (advanced): you can also type names here instead of marking the checklist, separated by commas,
+# e.g.  LOOKING_FOR=ECEN 340, PHYS 221   Names typed here are added to the ones you marked.
 LOOKING_FOR=
-
-# Registered classes to keep ticked (only used when SELECT_MODE=specified). Example:  REGISTERED=ECEN 350, ECEN 370
 REGISTERED=
-
-# Breaks:  leave (do not touch them, the default)  |  all  |  none  |  names, e.g.  BREAKS=afternoon, friday
+# Breaks:  leave (do not touch them, the default)  |  all  |  none  |  names. Breaks you mark in the checklist win.
 BREAKS=leave
 
 # --- 3. Phone-call alert with Twilio (optional) ----------------------------------------------

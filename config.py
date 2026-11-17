@@ -34,13 +34,38 @@ def load_settings(path=None):
         return
     for raw in path.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
-        if not line or line.startswith("#") or "=" not in line:
+        if not line or line.startswith("#") or line.startswith("[") or "=" not in line:
             continue
         key, value = line.split("=", 1)
         value = value.strip()
         if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
             value = value[1:-1]
         os.environ.setdefault(key.strip(), value)
+
+
+def file_values(path=None):
+    """The KEY=VALUE lines of settings.txt, read fresh from disk (so edits made while the program runs are seen)."""
+    path = Path(path) if path else SETTINGS_FILE
+    values = {}
+    if path.exists():
+        for raw in path.read_text(encoding="utf-8").splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or line.startswith("[") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            value = value.strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+                value = value[1:-1]
+            values[key.strip()] = value
+    return values
+
+
+def get(name, default=""):
+    """Setting from settings.txt (fresh), else from the environment, else the default."""
+    value = file_values().get(name, "")
+    if value == "":
+        value = os.environ.get(name, "")
+    return value if value != "" else default
 
 
 def env_bool(name, default):
@@ -65,10 +90,10 @@ def twilio_settings():
         "from_number": "TWILIO_FROM_NUMBER",
         "to_number": "TWILIO_TO_NUMBER",
     }
-    values = {name: os.environ.get(var, "").strip() for name, var in keys.items()}
+    values = {name: get(var).strip() for name, var in keys.items()}      # read fresh, so edits to settings.txt count
     if not all(values.values()):
         return None
-    values["voice_url"] = os.environ.get(
+    values["voice_url"] = get(
         "TWILIO_VOICE_URL",
         "https://webhooks.twilio.com/v1/Voice/Template/voice_speech_recognition",
     ).strip()

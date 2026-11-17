@@ -46,7 +46,7 @@ Run the program once:
 python main.py
 ```
 
-The first time, it creates **`settings.txt`** next to the program (from `settings.example.txt`) and stops. (Or copy `settings.example.txt` to `settings.txt` yourself.) Open `settings.txt` in any text editor, fill in the values after each `=`, and save. **This is the only file you need to edit.**
+The first time, it creates **`settings.txt`** next to the program (from `settings.example.txt`) and stops. (Your classes are added to the same file later, when you sign in.) (Or copy `settings.example.txt` to `settings.txt` yourself.) Open `settings.txt` in any text editor, fill in the values after each `=`, and save. **This is the only file you need to edit.**
 
 | Setting | What to put there |
 |---|---|
@@ -79,68 +79,90 @@ python main.py
 ```
 
 1. A Chrome window opens on your scheduler page.
-2. **In that window, sign in with your username and password and approve the Duo prompt.** Then open the schedule builder page (the one that lists your Courses, Breaks and Current Schedule). If `SELECT_MODE` is `off`, tick the boxes you want yourself.
-3. Come back to the terminal and press **ENTER**. Monitoring starts.
+2. **In that window, sign in with your username and password and approve the Duo prompt.** Then open the schedule builder page (the one that lists your Courses, Breaks and Current Schedule).
+3. Come back to the terminal and press **ENTER**. The first time, the program copies your classes into `settings.txt` and waits while you mark the ones you want (see [Choosing your classes](#choosing-your-classes-the-checklist-in-settingstxt)); after that, monitoring starts.
 4. Leave it running. When generated schedules appear it prints `SCHEDULE FOUND`, speaks the message and places the call, then repeats every two minutes until you press `Ctrl+C`.
 
 If the session expires while you wait (the page sends you back to the login screen), stop the script, run it again and sign in again.
 
-## Choosing your classes (no page elements needed)
+## Choosing your classes (the checklist in `settings.txt`)
 
-The schedule builder page has three lists of checkboxes, and the program knows all three:
+You never have to type a class name or find anything on the page. The schedule builder has three lists of checkboxes, and the program copies all of them into `settings.txt` for you:
 
 | List on the page | Called | What it is |
 |---|---|---|
-| **Courses** | looking for | Classes you want to get into |
-| **Current Schedule** | registered | Classes you are already enrolled in |
-| **Breaks** | breaks | Your blocked-out times |
+| **Courses** | `[looking for]` | Classes you want to get into |
+| **Current Schedule** | `[registered]` | Classes you are already enrolled in |
+| **Breaks** | `[breaks]` | Your blocked-out times |
 
-You just write class names in `settings.txt`, the way the page shows them (`ECEN 340`, `PHYS 221`; a 5-digit CRN also works for registered classes). The program finds the matching checkbox itself every time it checks the page, so you never need to look at the page's code.
+### How it works the first time
 
-**Not sure what to write?** Run `python main.py --list`. After you sign in it prints everything on the page you can choose, with its current state, for example:
+1. Run `python main.py`, sign in in the browser window, open the schedule builder page and press **ENTER**.
+2. The program reads your page and **writes every class and break it finds into the bottom of `settings.txt`** as a checklist, with the exact names the page uses (so nothing can be misspelled):
 
-```
-LOOKING FOR:
-  [unticked] ECEN 340 - Electric Energy Conversion
-REGISTERED:
-  [ticked  ] ECEN 350 - Computer Architecture and Design   (CRN 12345)
-BREAKS:
-  [unticked] afternoon
-```
+   ```
+   [looking for]
+   [ ] ECEN 325 - Electronics
+   [ ] ECEN 340 - Electric Energy Conversion
+   [ ] PHYS 221 - Optics and Thermal Physics
 
-Pick one of the modes with `SELECT_MODE`:
+   [registered]
+   [ ] ECEN 350 - Computer Architecture and Design (CRN 12345)
+   [ ] ECEN 370 - Electronic Properties of Materials (CRN 67890)
+
+   [breaks]
+   [ ] afternoon
+   ```
+
+3. It pauses and tells you to open `settings.txt`. **Put an x in the brackets of the ones you want** (`[x] ECEN 340 - ...`), set `SELECT_MODE` (below) and **save the file**.
+4. Back in the terminal press **ENTER**. It reads your choices and starts monitoring.
+
+Every later run refreshes the list from the page and **keeps your x marks**: new classes show up unmarked, classes that left the page disappear. You can edit the file at any time; the program re-reads your choices on every check.
+
+(Registered classes also show their 5-digit CRN, which is how two sections of the same class are told apart.)
+
+### The two modes
+
+Set `SELECT_MODE` in `settings.txt`:
 
 | `SELECT_MODE` | What it does | Use it when |
 |---|---|---|
 | `off` (default) | Ticks nothing. You set the boxes yourself before pressing ENTER. | You prefer to click yourself |
-| `all` (or `1`) | Ticks the classes in `LOOKING_FOR` and **all** your registered classes. | You are adding classes on top of your current schedule |
-| `specified` (or `2`) | Ticks the classes in `LOOKING_FOR` and **only** the registered classes in `REGISTERED`. | You are **replacing** a class: list the registered classes you keep and leave out the one you are swapping |
+| `all` (or `1`) | Ticks the classes you marked under `[looking for]` and **all** your registered classes. | You are adding classes on top of your current schedule |
+| `specified` (or `2`) | Ticks the classes you marked under `[looking for]` and **only** the ones you marked under `[registered]`. | You are **replacing** a class: mark the registered classes you keep and leave out the one you are swapping |
 
-Examples (in `settings.txt`):
+Examples of what to mark:
 
 ```
-# add ECEN 340 and PHYS 221 to my current schedule
-SELECT_MODE=all
-LOOKING_FOR=ECEN 340, PHYS 221
+# add ECEN 340 and PHYS 221 on top of my schedule        (SELECT_MODE=all)
+[looking for]
+[x] ECEN 340 - Electric Energy Conversion
+[x] PHYS 221 - Optics and Thermal Physics
 
-# swap out MATH 308: keep ECEN 350 and ECEN 370 registered, look for MATH 311 instead
-SELECT_MODE=specified
-LOOKING_FOR=MATH 311
-REGISTERED=ECEN 350, ECEN 370
+# swap out MATH 308 for MATH 311: keep ECEN 350 and ECEN 370  (SELECT_MODE=specified)
+[looking for]
+[x] MATH 311 - Some Course
+[registered]
+[x] ECEN 350 - Computer Architecture and Design (CRN 12345)
+[x] ECEN 370 - Electronic Properties of Materials (CRN 67890)
 ```
 
-Only the classes you name stay ticked in the "looking for" list; every other box in it is unticked. `BREAKS` can be `leave` (default, untouched), `all`, `none`, or a list of break names. If a name is not found on the page the program prints a warning instead of guessing. When you untick a registered class the page shows a warning box; the program clicks its OK button for you.
+Only the classes you mark stay ticked in the "looking for" list; every other box in it is unticked. Under `[breaks]` mark the breaks you want ticked (mark none to leave your breaks alone, or set `BREAKS=all` / `BREAKS=none`). When you untick a registered class the page shows a warning box; the program clicks its OK button for you.
+
+### Typing names instead (optional)
+
+If you would rather type, put names on the `LOOKING_FOR=` / `REGISTERED=` lines in `settings.txt`, separated by commas (`LOOKING_FOR=ECEN 340, PHYS 221`). They are added to anything you marked. A name that matches nothing on the page prints a warning instead of guessing. `python main.py --list` prints everything on the page with its current state, without changing any file.
 
 ## Settings
 
-All of these are lines in `settings.txt` (the first four are described above; the rest are optional and the example file has them commented out):
+All of these are lines in `settings.txt` (the first four are described above, and your checklist marks live at the bottom of the same file; the rest are optional and the example file has them commented out):
 
 | Setting | Default | Meaning |
 |---|---|---|
 | `SELECT_MODE` | `off` | `off`, `all` or `specified` (see above) |
-| `LOOKING_FOR` | empty | Classes to look for, separated by commas |
-| `REGISTERED` | empty | Registered classes to keep ticked (`specified` mode) |
-| `BREAKS` | `leave` | `leave`, `all`, `none` or break names |
+| `LOOKING_FOR` | empty | Optional: class names to look for, separated by commas (added to your checklist marks) |
+| `REGISTERED` | empty | Optional: registered classes to keep ticked in `specified` mode |
+| `BREAKS` | `leave` | `leave`, `all`, `none` or break names (breaks marked in the checklist win) |
 | `WAIT_TIME` | `5` | Seconds between checks |
 | `CALL_INTERVAL` | `120` | Seconds between repeated alerts once a schedule is found |
 | `VOICE_ALERT` | `true` | Speak the alert on this computer |
@@ -157,18 +179,21 @@ The word the script looks for (`Generated`) and the spoken message are constants
 | File | What it is |
 |---|---|
 | `main.py` | The monitor |
-| `selection.py` | Finds the checkboxes for your classes by name and ticks them |
+| `checklist.py` | Writes your page's classes into `settings.txt` and reads your x marks |
+| `selection.py` | Finds the checkboxes for your classes and ticks them |
 | `config.py` | Reads `settings.txt` and the Twilio settings |
 | `test_twilio.py` | Places one test call |
 | `settings.example.txt` | Template for your settings; the program copies it to `settings.txt` on first run |
-| `settings.txt` | **Your** settings (created on first run, git-ignored, never shared) |
+| `settings.txt` | **Your** settings and class checklist (created on first run, git-ignored, never shared) |
 | `requirements.txt` | Python packages |
 
 ## Troubleshooting
 
 - **`Twilio is not configured`**: one of the four `TWILIO_*` values in `settings.txt` is empty. Fill them in or set `MAKE_CALLS=false`.
 - **The call never arrives on a trial account**: the destination number must be a verified caller ID in your Twilio Console.
-- **`WARNING: 'XYZ' was not found in the ... list`**: the name does not match anything on the page. Run `python main.py --list` and copy the name exactly (subject and number, like `ECEN 340`).
+- **`WARNING: 'XYZ' was not found in the ... list`**: a name you typed on the `LOOKING_FOR=` / `REGISTERED=` lines does not match anything on the page. Use the checklist instead (it holds the exact names), or run `python main.py --list`.
+- **`I could not find any classes on this page`**: the schedule builder was not showing when you pressed ENTER. Open the page that lists your Courses and Current Schedule, then run it again.
+- **A class is missing from the checklist**: the list is refreshed from the page at the start of each run, so add the class on the page, then run again.
 - **`Generate button not found`**: the page is not on the schedule options screen. Select your courses, or sign in again.
 - **No spoken alert**: install the packages again (`pip install -r requirements.txt`) and check that Windows has a text-to-speech voice installed.
 - **Browser not found**: run `playwright install chromium`.
