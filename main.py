@@ -6,11 +6,14 @@ and pick your courses, then keeps refreshing, clicks "Generate Schedules" and al
 
 The script never sees your login: you type it into the browser yourself.
 """
+import os
+import sys
 import time
 
 from playwright.sync_api import sync_playwright
 
 import config
+import selection
 
 
 # ==================================================
@@ -19,7 +22,13 @@ import config
 
 REFRESH_PAGE = config.env_bool("REFRESH_PAGE", True)
 
-CLICK_SELECT_ALL = config.env_bool("CLICK_SELECT_ALL", False)
+# Which boxes to tick (by class name, see settings.txt). "off" = leave the boxes as you set them yourself.
+_MODES = {"1": "all", "all": "all", "2": "specified", "specified": "specified", "specific": "specified"}
+SELECT_MODE = _MODES.get(os.environ.get("SELECT_MODE", "off").strip().lower(), "off")
+LOOKING_FOR = selection.split_names(os.environ.get("LOOKING_FOR", ""))
+REGISTERED = selection.split_names(os.environ.get("REGISTERED", ""))
+BREAKS = selection.split_names(os.environ.get("BREAKS", "leave")) or ["leave"]
+
 CLICK_OK = config.env_bool("CLICK_OK", True)
 CLICK_GENERATE = config.env_bool("CLICK_GENERATE", True)
 
@@ -93,16 +102,12 @@ def alert():
 # BUTTON FUNCTIONS
 # ==================================================
 
-def click_select_all(page):
-    if not CLICK_SELECT_ALL:
-        return
-
-    checkbox = page.locator('input[aria-label="Select All Registered Sections"]')
-
-    if checkbox.count():
-        if checkbox.is_checked():
-            checkbox.uncheck()
-            print("Unchecked registered sections")
+def apply_choices(page):
+    """Tick / untick the class boxes according to SELECT_MODE, LOOKING_FOR, REGISTERED and BREAKS."""
+    try:
+        selection.apply_selection(page, SELECT_MODE, LOOKING_FOR, REGISTERED, BREAKS)
+    except Exception as e:
+        print("Could not apply your class choices:", e)
 
 
 def click_ok(page):
@@ -185,12 +190,24 @@ def main():
         print("A browser window is open. In that window, YOU do the following:")
         print("  1. Sign in (type your username and password there).")
         print("  2. Approve the Duo / two-factor prompt.")
-        print("  3. Select your courses and options so the schedule page is showing.")
+        print("  3. Open the schedule builder page (your Courses, Breaks and Current Schedule are listed there).")
+        if SELECT_MODE == "off":
+            print("     SELECT_MODE is off, so tick the boxes you want yourself.")
+        else:
+            print(f"     The program ticks the boxes for you (SELECT_MODE={SELECT_MODE}, see settings.txt).")
         print()
         print("This script never sees or stores your login.")
         print()
 
         input("Press ENTER here once you are signed in and ready to start monitoring...")
+
+        if "--list" in sys.argv:
+            print("\nEverything on the page you can choose by name:")
+            selection.list_page(page)
+            print("\nCopy the names exactly as shown into settings.txt (LOOKING_FOR / REGISTERED / BREAKS).")
+            return
+
+        apply_choices(page)
 
         print("\nMonitoring started (Ctrl+C to stop)")
 
@@ -208,8 +225,8 @@ def main():
 
                     print("Page refreshed")
 
-                click_select_all(page)
                 click_ok(page)
+                apply_choices(page)
                 click_generate(page)
 
                 try:

@@ -10,7 +10,31 @@
 # (Leave it empty and the program asks for it each time it starts.)
 SCHEDULER_URL=
 
-# --- 2. Phone-call alert with Twilio (optional) ----------------------------------------------
+# --- 2. Which classes to tick (so you never have to find buttons on the page) -----------------
+# The page has three lists: "Courses" (classes you are LOOKING FOR), "Current Schedule" (classes you are
+# REGISTERED in) and "Breaks". Write class names the way the page shows them, e.g.  ECEN 340  or  PHYS 221
+# (a 5-digit CRN also works for registered classes). Not sure what to write? Run:  python main.py --list
+#
+# SELECT_MODE says how the boxes get ticked each time the page is checked:
+#   off        the program ticks nothing: you tick the boxes yourself before pressing ENTER.
+#   all        ticks the LOOKING_FOR classes below and ALL of your registered classes.
+#   specified  ticks the LOOKING_FOR classes below and ONLY the REGISTERED classes listed below.
+#              Use this to swap a class: list the registered classes you KEEP, and leave out the one you
+#              are replacing (it is unticked, and the looking-for class you named is ticked instead).
+# (You can also write 1 for "all" and 2 for "specified".)
+SELECT_MODE=off
+
+# Classes you are looking for, separated by commas. Only these boxes stay ticked in the Courses list.
+# Example:  LOOKING_FOR=ECEN 340, PHYS 221
+LOOKING_FOR=
+
+# Registered classes to keep ticked (only used when SELECT_MODE=specified). Example:  REGISTERED=ECEN 350, ECEN 370
+REGISTERED=
+
+# Breaks:  leave (do not touch them, the default)  |  all  |  none  |  names, e.g.  BREAKS=afternoon, friday
+BREAKS=leave
+
+# --- 3. Phone-call alert with Twilio (optional) ----------------------------------------------
 # Leave all four empty if you only want the spoken alert on your computer.
 # Account SID and Auth Token are on the Twilio Console home page ("Account Info"). Treat the token like a password.
 TWILIO_ACCOUNT_SID=
@@ -21,7 +45,7 @@ TWILIO_FROM_NUMBER=
 # On a Twilio trial account it must be a verified caller ID in your Twilio Console:
 TWILIO_TO_NUMBER=
 
-# --- 3. Optional tweaks (remove the # to change; defaults shown) -----------------------------
+# --- 4. Optional tweaks (remove the # to change; defaults shown) -----------------------------
 # WAIT_TIME=5            seconds between checks
 # CALL_INTERVAL=120      seconds between repeated alerts once a schedule is found
 # VOICE_ALERT=true       speak the alert on this computer
@@ -29,4 +53,3 @@ TWILIO_TO_NUMBER=
 # REFRESH_PAGE=true      reload the page on every check
 # CLICK_OK=true
 # CLICK_GENERATE=true
-# CLICK_SELECT_ALL=false
