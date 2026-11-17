@@ -1,0 +1,32 @@
+# ==========================================================================================
+#  SCHEDULE CHECKER SETTINGS  -  this is the ONLY file you need to edit.
+#  Fill in the values after each "=" , save, and run the program. Lines starting with # are comments.
+#  Do not share this file or upload it anywhere: it holds your private keys (it is git-ignored).
+# ==========================================================================================
+
+# --- 1. The College Scheduler page to watch -------------------------------------------------
+# The "options" page for your term, for example
+#   https://YOUR-SCHOOL.collegescheduler.com/terms/YOUR%20TERM/options
+# (Leave it empty and the program asks for it each time it starts.)
+SCHEDULER_URL=
+
+# --- 2. Phone-call alert with Twilio (optional) ----------------------------------------------
+# Leave all four empty if you only want the spoken alert on your computer.
+# Account SID and Auth Token are on the Twilio Console home page ("Account Info"). Treat the token like a password.
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+# A Twilio phone number you own, written +1XXXXXXXXXX (the call comes FROM this number):
+TWILIO_FROM_NUMBER=
+# YOUR phone number, written +1XXXXXXXXXX (this is the number that gets called).
+# On a Twilio trial account it must be a verified caller ID in your Twilio Console:
+TWILIO_TO_NUMBER=
+
+# --- 3. Optional tweaks (remove the # to change; defaults shown) -----------------------------
+# WAIT_TIME=5            seconds between checks
+# CALL_INTERVAL=120      seconds between repeated alerts once a schedule is found
+# VOICE_ALERT=true       speak the alert on this computer
+# MAKE_CALLS=true        place the Twilio call (needs the Twilio values above)
+# REFRESH_PAGE=true      reload the page on every check
+# CLICK_OK=true
+# CLICK_GENERATE=true
+# CLICK_SELECT_ALL=false

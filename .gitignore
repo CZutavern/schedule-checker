@@ -1,0 +1,16 @@
+# secrets and local settings: never commit these
+settings.txt
+.env
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Playwright / editor / OS
+.playwright/
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
