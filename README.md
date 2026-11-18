@@ -15,6 +15,17 @@ It was written to catch the registration-time schedule generation at a universit
 
 ---
 
+## Quick start for Windows (no command line needed)
+
+1. Download **`schedule-checker-windows.zip`** from the [latest release](https://github.com/CZutavern/schedule-checker/releases/latest) (under **Assets**). (The green **Code** button, then **Download ZIP**, gives the same files.)
+2. Right-click the downloaded ZIP, choose **Extract All...**, and open the new folder. Don't run it from inside the ZIP.
+3. Double-click **`Setup.bat`**. It installs everything it needs (it offers to install Python for you if you don't have it). If Windows shows a blue "Windows protected your PC" box, click **More info**, then **Run anyway**. The files are plain text, so you can open them in Notepad to check.
+4. Notepad opens **`settings.txt`**. Paste the scheduler web address after `SCHEDULER_URL=` (and your Twilio details if you want the phone call), save, and close it.
+5. Double-click **`Run.bat`** to start. Sign in and approve Duo in the browser window that opens, then follow the steps in [Run it](#4-run-it) below.
+6. Optional: double-click **`Test phone call.bat`** once to check that the Twilio call works.
+
+Everything below is the same thing explained step by step, for Mac/Linux or if you prefer the command line.
+
 ## Requirements
 
 - Python 3.10 or newer
